@@ -1,0 +1,22 @@
+[flake8]
+exclude =
+    .git,
+    doc,
+    __pycache__,
+    venv,
+
+ignore =
+    # Python2-specific comma warnings
+    C814,
+    # Do not require presence of docstrings (which is not always useful
+    # for modules, or small inline classes such as Meta classes in
+    # django).
+    D100, D101, D102, D104, D105, D106, D107,
+    # Do not enforce docstrings in imperative mood, since some things
+    # (main entry point, callbacks) are better with other comment
+    # styles.
+    D401,
+
+# TODO: Enable B902, if https://github.com/PyCQA/flake8-bugbear/issues/19 is fixed
+
+max-line-length = 79
