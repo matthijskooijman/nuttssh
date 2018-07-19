@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 from setuptools import setup
 
+with open("README.md", "r") as f:
+    long_description = f.read()
+
 setup(
     name='nuttssh',
     version='0.1',
     description='SSH switchboard for internally patching forwarded ports',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='http://github.com/matthijskooijman/nuttssh',
     classifiers=[
         'Development Status :: 3 - Alpha',
