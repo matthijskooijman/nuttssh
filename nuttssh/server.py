@@ -103,14 +103,17 @@ class NuttsshServer(asyncssh.SSHServer):
 
         options = self.authorized_keys.validate(key, peer_addr)
 
+        keystr = key.export_public_key().decode().strip()
+
         # None means no matching key, so deny access
         if options is None:
+            logging.debug("Rejecting key %s %s", keystr, username)
             return False
 
-        self.process_key_options(options)
+        logging.debug("Accepting key %s %s %s",
+                      str(options), keystr, username)
 
-        keystr = key.export_public_key().decode().strip()
-        logging.debug("Accepting key %s %s", str(options), keystr)
+        self.process_key_options(options)
 
         return True
 
