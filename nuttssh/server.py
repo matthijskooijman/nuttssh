@@ -23,6 +23,8 @@ class Permissions(enum.Enum):
     LISTEN = 1
     # Connecting to (virtual) ports
     INITIATE = 2
+    # Connecting to (virtual) ports
+    LIST_LISTENERS = 3
 
 
 """
@@ -30,7 +32,7 @@ Predefined access levels, mapping to a more fine-grained list of permissions.
 """
 access_levels = {
     'listen': {Permissions.LISTEN},
-    'initiate': {Permissions.INITIATE},
+    'initiate': {Permissions.INITIATE, Permissions.LIST_LISTENERS},
 }
 
 

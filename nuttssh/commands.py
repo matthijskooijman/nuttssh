@@ -6,6 +6,8 @@
 # This file handles commands that can be executed through SSH, to inspect and
 # administrate the server.
 
+from .server import Permissions
+
 
 def handle_command(server, process, command):
     """
@@ -20,5 +22,36 @@ def handle_command(server, process, command):
                     the SSH client, or None when no command was passed (and a
                     shell was requested).
     """
-    # TODO
-    process.exit(1)
+    # TODO: Properly implement command parsing, using e.g. click. For now, just
+    # always run the list command
+    list(server, process)
+
+
+def list(server, process):
+    """List all active listeners."""
+    # TODO: Put this in a decorator?
+    if Permissions.LIST_LISTENERS not in server.permissions:
+        process.stderr.write("Permission denied\n")
+        process.exit(1)
+        return
+
+    process.stdout.write("Listening clients:\n")
+    # TODO: We should probably just keep a list of server instances, or perhaps
+    # structure this output differently.
+    servers = {s for ss in server.daemon.listener_names.values() for s in ss}
+
+    if servers:
+        for s in sorted(servers, key=lambda x: x.hostname):
+            peername = s.conn.get_extra_info('peername')
+            ip = peername[0]
+            ports = (l.listen_port for l in s.listeners.values())
+
+            process.stdout.write("  {}: ip={} aliases={} ports={}\n".format(
+                s.hostname,
+                ip,
+                ','.join(s.aliases),
+                ','.join(str(p) for p in sorted(ports)),
+            ))
+    else:
+        process.stdout.write("  None\n")
+    process.exit(0)
