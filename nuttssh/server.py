@@ -2,6 +2,9 @@
 #
 # This file is made available under the MIT license. See the accompanying
 # LICENSE file for the full text.
+#
+# This file handle the main SSH server, authentication and creation of
+# circuits.
 
 import enum
 import logging
@@ -187,6 +190,28 @@ class NuttsshServer(asyncssh.SSHServer):
                 asyncssh.SSH_OPEN_ADMINISTRATIVELY_PROHIBITED,
                 "Insufficient permissions to connect", "en")
         return self.connect_to_slave(dest_host, dest_port)
+
+    def session_requested(self):
+        """
+        Called when a session/channel is requested by the client.
+
+        A session can be a shell, command or subsystem request (e.g. sftp).
+        """
+        # TODO: Move upwards, but that introduces a circular dependency
+        from . import commands
+
+        def process_factory(process):
+            commands.handle_command(self, process, process.command)
+
+        # We should return a session object, that needs to handle all parts of
+        # session setup (env vars, pty request, command request, etc.). We let
+        # asyncssh handle that, and once a full command or shell requests is
+        # received, handle the resulting command.
+        return asyncssh.SSHServerProcess(
+            process_factory=process_factory,
+            sftp_factory=None,
+            allow_scp=False,
+        )
 
     def create_listener(self, host, port):
         """Create and register a new listener."""
