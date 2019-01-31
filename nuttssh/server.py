@@ -217,10 +217,11 @@ class NuttsshServer(asyncssh.SSHServer):
 
     def create_listener(self, host, port):
         """Create and register a new listener."""
-        # If this is the first, add ourselves to the list of listening names
+        # If this is the first, prepend ourselves to the list of listening
+        # names
         if not self.listeners:
             for name in self.names:
-                self.daemon.listener_names[name].append(self)
+                self.daemon.listener_names[name].insert(0, self)
 
         if port in self.listeners:
             logging.error("Duplicate listen port %s requested, refusing the"
@@ -259,7 +260,7 @@ class NuttsshServer(asyncssh.SSHServer):
             raise asyncssh.ChannelOpenError(
                 asyncssh.OPEN_CONNECT_FAILED,
                 "Slave %s not found" % (host,), "en")
-        # When multiple slaves have the same name, just use the oldest one
+        # When multiple slaves have the same name, just use the newest one
         slave = slaves[0]
 
         # Find the port

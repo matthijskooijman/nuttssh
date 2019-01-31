@@ -135,7 +135,7 @@ given connection. Using the `alias` option, additional alias names can be
 specified (the option must be specified multiple times for multiple aliases).
 
 When multiple connections each claim the same name (hostname or alias), only
-the first client to connect can actually be reached using that name. Once that
+the last client to connect can actually be reached using that name. Once that
 client disconnects, the next one will become reachable again.
 
 ### Connecting listening clients
