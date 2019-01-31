@@ -134,9 +134,11 @@ looks a bit like a hack, but it seems like the cleanest approach). Using the
 given connection. Using the `alias` option, additional alias names can be
 specified (the option must be specified multiple times for multiple aliases).
 
-When multiple connections each claim the same name (hostname or alias), only
-the last client to connect can actually be reached using that name. Once that
-client disconnects, the next one will become reachable again.
+When multiple listening clients each claim the same name (hostname or alias),
+the last client to connect will be reached using that name. To reach the other
+clients, you can add an index to the hostname. E.g. when two listening clients
+both use `test` as their hostname, you can connect to the most recent one using
+`test` (or `test~0`) and the older one using `test~1`.
 
 ### Connecting listening clients
 Connections to the Nuttssh server use the normal SSH protocol, so can use a

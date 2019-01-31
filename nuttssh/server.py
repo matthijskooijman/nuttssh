@@ -12,6 +12,8 @@ import collections
 
 import asyncssh
 
+from . import util
+
 LISTEN_HOST = '0.0.0.0'
 LISTEN_PORT = 2222
 HOST_KEY_FILE = 'ssh_host_key'
@@ -253,15 +255,25 @@ class NuttsshServer(asyncssh.SSHServer):
                      self.names, port)
 
     async def connect_to_slave(self, host, port):
+        # Split off any index from the name, defaulting to the most recent
+        # client (index 0)
+        name, index = util.split_hostname_index(host, 0)
+
         # Find the slave
-        slaves = self.daemon.listener_names[host]
+        slaves = self.daemon.listener_names[name]
         if not slaves:
-            logging.error("Slave %s not found", host)
+            logging.error("Slave %s not found", name)
             raise asyncssh.ChannelOpenError(
                 asyncssh.OPEN_CONNECT_FAILED,
-                "Slave %s not found" % (host,), "en")
-        # When multiple slaves have the same name, just use the newest one
-        slave = slaves[0]
+                "Slave %s not found" % (name,), "en")
+
+        try:
+            slave = slaves[index]
+        except IndexError:
+            logging.error("Invalid index %s for slave %s", index, name)
+            raise asyncssh.ChannelOpenError(
+                asyncssh.OPEN_CONNECT_FAILED,
+                "Invalid index %s for slave %s" % (index, name), "en")
 
         # Find the port
         logging.debug("%s", slave.listeners)
