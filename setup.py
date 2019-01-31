@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 
 setup(
     name='nuttssh',
-    version='0.1',
+    version='0.2',
     description='SSH switchboard for internally patching forwarded ports',
     long_description=long_description,
     long_description_content_type="text/markdown",
