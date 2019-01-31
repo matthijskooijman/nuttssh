@@ -6,6 +6,7 @@
 # This file handles commands that can be executed through SSH, to inspect and
 # administrate the server.
 
+from . import util
 from .server import Permissions
 
 
@@ -36,22 +37,30 @@ def list(server, process):
         return
 
     process.stdout.write("Listening clients:\n")
-    # TODO: We should probably just keep a list of server instances, or perhaps
-    # structure this output differently.
-    servers = {s for ss in server.daemon.listener_names.values() for s in ss}
 
-    if servers:
-        for s in sorted(servers, key=lambda x: x.hostname):
-            peername = s.conn.get_extra_info('peername')
-            ip = peername[0]
-            ports = (l.listen_port for l in s.listeners.values())
+    names = server.daemon.listener_names
+    if names:
+        for name in sorted(names.keys()):
+            for i, s in enumerate(names[name]):
+                # TODO: Option to list aliases separately?
+                if name != s.hostname:
+                    continue
 
-            process.stdout.write("  {}: ip={} aliases={} ports={}\n".format(
-                s.hostname,
-                ip,
-                ','.join(s.aliases),
-                ','.join(str(p) for p in sorted(ports)),
-            ))
+                peername = s.conn.get_extra_info('peername')
+                ip = peername[0]
+                ports = (l.listen_port for l in s.listeners.values())
+                if i == 0:
+                    connect_name = name
+                else:
+                    connect_name = util.join_hostname_index(name, i)
+
+                line = "  {}: ip={} aliases={} ports={}\n".format(
+                    connect_name,
+                    ip,
+                    ','.join(s.aliases),
+                    ','.join(str(p) for p in sorted(ports)),
+                )
+                process.stdout.write(line)
     else:
         process.stdout.write("  None\n")
     process.exit(0)
