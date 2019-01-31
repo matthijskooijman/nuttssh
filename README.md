@@ -287,6 +287,6 @@ forwarding (but uses key fingerprints to identify clients, and probably
 predates the SSH "jump host" feature).
 
 Since how Nuttssh works seems a bit similar to the way telephone switchboards
-used to work years ago, Nuttssh is named after Emma & TODO Nutt, which were the
-first two female telephone switchboard operators. The name "circuit" is also
-taken from telephone jargon.
+used to work years ago, Nuttssh is named after Emma & Stella Nutt, which were
+the first two female telephone switchboard operators. The name "circuit" is
+also taken from telephone jargon.
