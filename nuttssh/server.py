@@ -54,9 +54,9 @@ class NuttsshDaemon:
         def server_factory():
             return NuttsshServer(self)
 
-        await asyncssh.create_server(
-            server_factory, LISTEN_HOST, LISTEN_PORT,
-            server_host_keys=[HOST_KEY_FILE])
+        await asyncssh.listen(LISTEN_HOST, LISTEN_PORT,
+            server_host_keys=[HOST_KEY_FILE],
+            server_factory=server_factory)
 
 
 class NuttsshServer(asyncssh.SSHServer):
