@@ -120,34 +120,22 @@ class NuttsshServer(asyncssh.SSHServer):
         for listener in self.listeners:
             listener.close()
 
-    def public_key_auth_supported(self):
-        """Called to see if public key auth is (still) supported."""
-        return True
-
     def validate_public_key(self, username, key):
-        """Called when the client presents a key for authentication."""
-        # Look up the peer address, to support the "from" key option.
-        peer_addr = self.conn.get_extra_info('peername')[0]
+        """
+        Called when the client presents a key for authentication if lookup
+        in authorized_keys failed.
+        """
 
-        options = self.authorized_keys.validate(key, username, peer_addr)
-
+        # Looking up keys is handled by the connection already, but overriding
+        # this hook allows logging failed keys.
         keystr = key.export_public_key().decode().strip()
 
-        # None means no matching key, so deny access
-        if options is None:
-            logging.debug("Rejecting key %s %s", keystr, username)
-            return False
+        logging.debug("Rejecting key %s %s", keystr, username)
+        return False
 
-        logging.debug("Accepting key %s %s %s",
-                      str(options), keystr, username)
-
-        self.process_key_options(options)
-
-        return True
-
-    def process_key_options(self, options):
+    def auth_completed(self):
         """Process the options of the accepted key."""
-        access = options.get('access', [])
+        access = self.conn.get_key_option('access', [])
         if not access:
             # TODO: Should this disconnect, or skip this key?
             logging.warning("Used key has no access level")
@@ -159,26 +147,27 @@ class NuttsshServer(asyncssh.SSHServer):
             except KeyError:
                 logging.error("Key has unknown access level: \"%s\"", level)
 
-        # If not specified in the key options, assume that the username is the
+        # If not specified in the key options, assume that the hostname is the
         # hostname.
-        hostnames = options.get('hostname', [self.username])
+        username = self.conn.get_extra_info('username')
+        hostnames = self.conn.get_key_option('hostname', [username])
         if len(hostnames) > 1:
             logging.warning("Multiple hostnames specified, using the first")
         self.hostname = hostnames[0]
-        self.aliases = options.get('alias', [])
+        self.aliases = self.conn.get_key_option('alias', [])
         self.names = [self.hostname] + self.aliases
 
     def begin_auth(self, username):
         """The client has started authentication with the given username."""
-        self.username = username
         try:
-            self.authorized_keys = asyncssh.read_authorized_keys(KEYS_FILE)
+            authorized_keys = asyncssh.read_authorized_keys(KEYS_FILE)
         except Exception as e:
             # No point in continuing without authorized keys
             logging.error("Failed to read key file: %s", e)
             raise asyncssh.DisconnectError(
                 asyncssh.DISC_NO_MORE_AUTH_METHODS_AVAILABLE,
                 "Invalid server configuration", "en")
+        self.conn.set_authorized_keys(authorized_keys)
 
         # Auth required
         return True
