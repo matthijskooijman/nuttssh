@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nuttssh"
-version = "0.2"
+version = "0.3"
 description = "SSH switchboard for internally patching forwarded ports"
 authors = ["Matthijs Kooijman <matthijs@stdin.nl>"]
 license = "MIT"
