@@ -54,9 +54,28 @@ class NuttsshDaemon:
         def server_factory():
             return NuttsshServer(self)
 
-        await asyncssh.listen(LISTEN_HOST, LISTEN_PORT,
+        # Callable that is called to handle shell or command execution requests
+        # (note that this does not build a SSHServerProcess object, it just
+        # accepts an existing one and handle the execution of the task).
+        # It is is a bit smelly that this is a global factory function rather
+        # than being a callback on the server object, but with the
+        # session_requested callback that can be called by
+        # SSHServerConnection._process_session_open(), it only creates a
+        # SSHServerStreamSession, not a SSHServerProcess that we need (and the
+        # SSHServerProcess constructro is not public/stable API).
+        # So this global function just looks up the server and delegates to it.
+        async def process_factory(process):
+            # This extra info must be set by the server object, there is no
+            # (documented) way to get the server from the process object
+            server = process.channel.get_extra_info('server')
+            await server.handle_command_or_shell(process)
+
+        await asyncssh.listen(
+            LISTEN_HOST, LISTEN_PORT,
             server_host_keys=[HOST_KEY_FILE],
-            server_factory=server_factory)
+            server_factory=server_factory,
+            process_factory=process_factory,
+        )
 
 
 class NuttsshServer(asyncssh.SSHServer):
@@ -84,6 +103,8 @@ class NuttsshServer(asyncssh.SSHServer):
     def connection_made(self, conn):
         """Called when the connection is opened."""
         self.conn = conn
+        # For NuttsshDaemon.start.process_factory
+        conn.set_extra_info(server=self)
         logging.info('Connection received from %s',
                      conn.get_extra_info('peername')[0])
 
@@ -195,27 +216,15 @@ class NuttsshServer(asyncssh.SSHServer):
                 "Insufficient permissions to connect", "en")
         return self.connect_to_slave(dest_host, dest_port)
 
-    def session_requested(self):
+    async def handle_command_or_shell(self, process):
         """
-        Called when a session/channel is requested by the client.
-
-        A session can be a shell, command or subsystem request (e.g. sftp).
+        Called by NuttsshDaemon.start.process_factory when a shell or command
+        execution is requested by the client.
         """
         # TODO: Move upwards, but that introduces a circular dependency
         from . import commands
 
-        def process_factory(process):
-            commands.handle_command(self, process, process.command)
-
-        # We should return a session object, that needs to handle all parts of
-        # session setup (env vars, pty request, command request, etc.). We let
-        # asyncssh handle that, and once a full command or shell requests is
-        # received, handle the resulting command.
-        return asyncssh.SSHServerProcess(
-            process_factory=process_factory,
-            sftp_factory=None,
-            allow_scp=False,
-        )
+        commands.handle_command(self, process, process.command)
 
     def create_listener(self, host, port):
         """Create and register a new listener."""
