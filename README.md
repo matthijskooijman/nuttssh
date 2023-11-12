@@ -74,8 +74,13 @@ Python 3), you might also be able to just use `pip` and `python` instead.
 ## Configuration
 Currently, no configuration file or options is supported. There are some
 constants in the top of `nuttssh/server.py` that hardcode nuttsh to listen on
-any interface, on port 2222 and set the name of the `ssh_host_key` and
+any interface, on port 1878 and set the name of the `ssh_host_key` and
 `authorized_keys` file.
+
+The default port is chosen to be a non-standard port, to prevent conflicts with
+an existing SSH server, and to reduce noise from SSH brute force attacks. The
+port chosen is based on the year that the Nutt sisters became the first female
+telephone operators in 1878.
 
 ### SSH host key
 To allow starting `nuttssh`, an ssh host key must be present. This should be
@@ -145,9 +150,9 @@ Connections to the Nuttssh server use the normal SSH protocol, so can use a
 regular SSH client. To open up a listening port, the normal port forwarding
 options can be used. For example:
 
-    ssh myhost@nuttsh.example.org -p 2222 -R 22:localhost:22 -N
+    ssh myhost@nuttsh.example.org -p 1878 -R 22:localhost:22 -N
 
-This connects to a Nuttssh server running on `nuttsh.example.org`, port 2222.
+This connects to a Nuttssh server running on `nuttsh.example.org`, port 1878.
 Our hostname (`myhost`) is passed as the username.  No shell or other remote
 command is run (`-N`), but a (virtual) port 22 is opened in the Nuttssh server.
 Any incoming circuits on that port are forwarded through the SSH connection and
@@ -171,7 +176,7 @@ host or port by specifying them with the `-R` option.
 
 For example:
 
-    ssh myhost@nuttsh.example.org -p 2222 -R 80:localhost:8080 -N
+    ssh myhost@nuttsh.example.org -p 1878 -R 80:localhost:8080 -N
 
 This requests a virtual port 80 on the Nuttssh server and connects any incoming
 circuits to port 8080 on localhost. Note that this is completely invisible to
@@ -183,9 +188,9 @@ Initiating clients also use the plain SSH protocol and can use a normal SSH
 client. For example, to set up an SSH connection to the listening client from
 the previous example, using a circuit through the NuttSSH server:
 
-    ssh -J nuttsh.example.org:2222 myhost
+    ssh -J nuttsh.example.org:1878 myhost
 
-This instructs ssh to first connect to `nuttssh.example.org`, port 2222 and
+This instructs ssh to first connect to `nuttssh.example.org`, port 1878 and
 then inside that connection, ask the Nuttssh server to set up a circuit
 (tunneled connection) to `myhost`, port 22 (not specified explicitly). This
 hostname and port combination is then matched by the Nuttsh server to the
@@ -206,7 +211,7 @@ the listening client. This also means that authentication must happen twice.
 You can also ask SSH to open a local listening port, and create a circuit for
 each incoming connection on that port. For example:
 
-    ssh -L 22:myhost:22 nuttsh.example.org -p 2222 -N
+    ssh -L 22:myhost:22 nuttsh.example.org -p 1878 -N
 
 Opens up port 22 locally, and forwards any connections through a circuit to
 port 22 on `myhost`. Again `-N` is specified to prevent trying to execute a
@@ -219,7 +224,7 @@ be routed through the same SSH connection to the Nuttssh server.
 SSH can also forward data on its stdin and stdout streams into a circuit. For
 example:
 
-    ssh -W myhost:22 nuttsh.example.org -p 2222
+    ssh -W myhost:22 nuttsh.example.org -p 1878
 
 This opens a circuit to `myhost` on port 22, and connects it to the stdin and
 stdout of the local ssh client. The `-N` option is implied by `-W`, so does
@@ -234,7 +239,7 @@ all listening hosts, but not other hosts).
 
 To set this up, run:
 
-    ssh -D 3128 nuttsh.example.org -p 2222 -N
+    ssh -D 3128 nuttsh.example.org -p 1878 -N
 
 This instructs ssh to open up a SOCKS proxy port on local port 3128, which can
 then be used by other programs.

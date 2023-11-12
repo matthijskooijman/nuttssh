@@ -15,7 +15,7 @@ import asyncssh
 from . import util
 
 LISTEN_HOST = '0.0.0.0'
-LISTEN_PORT = 2222
+LISTEN_PORT = 1878
 HOST_KEY_FILE = 'ssh_host_key'
 KEYS_FILE = 'authorized_keys'
 
