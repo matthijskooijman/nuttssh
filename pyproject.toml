@@ -17,7 +17,7 @@ classifiers=[
 ]
 
 [tool.poetry.dependencies]
-python = "^3.5"
+python = "^3.6"
 asyncssh = "^2.3"
 
 [tool.poetry.dev-dependencies]
